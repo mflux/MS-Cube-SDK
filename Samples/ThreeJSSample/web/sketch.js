@@ -6,6 +6,8 @@ var imgHeight = 424;
 var depthMap;
 var depthTexture;
 
+var nearClipping = 12050, farClipping = 500;
+
 function setup(){
 	var p5Canvas = createCanvas(imgWidth, imgHeight); 
 	$( p5Canvas.elt ).addClass( 'preview' );	
@@ -16,7 +18,7 @@ function setup(){
 
 function main( depthCanvas ) {
 	var scene = new THREE.Scene();
-	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.001, 10000 );
+	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100000 );
 	camera.position.set( 100, 100, 100 );
 	var renderer = new THREE.WebGLRenderer();
 	renderer.setSize( window.innerWidth, window.innerHeight );
@@ -42,30 +44,31 @@ function createParticles( numParticles, depthCanvas ){
 	depthTexture = new THREE.Texture( depthCanvas );
 
 	var uniforms = {
-		depthTexture: { type: 't', value: depthTexture }
+		depthTexture: { type: 't', value: depthTexture },
+		width: { type: "f", value: imgWidth },
+		height: { type: "f", value: imgHeight },
+		nearClipping: { type: "f", value: nearClipping },
+		farClipping: { type: "f", value: farClipping }		
 	}
-
-	var emptyIndexArray = [];
-	for( var i=0; i<numParticles; i++ ){
-		emptyIndexArray[ i ] = i;
-	}
-	var attributes = {
-		index: {	type: 'f', value: emptyIndexArray },		
-	};	
 
 	var shaderMaterial = new THREE.ShaderMaterial( {
-		uniforms:       uniforms,
-		attributes:     attributes,
+		uniforms:       uniforms,		
 		vertexShader:   document.getElementById( 'vertexshader' ).textContent,
 		fragmentShader: document.getElementById( 'fragmentshader' ).textContent,		
 	});	
 
 	var geometry = new THREE.Geometry();
-	for( var i=0; i<numParticles; i++ ){
-		geometry.vertices.push( new THREE.Vector3() );
+	for ( var i = 0; i<numParticles; i ++ ) {
+
+		var position = new THREE.Vector3();
+		position.x = ( i % imgWidth );
+		position.y = Math.floor( i / imgWidth );
+
+		geometry.vertices.push( new THREE.Vector3( position.x, position.y, position.z ) );
 	}
 
 	var pointCloud = new THREE.PointCloud( geometry, shaderMaterial );
+	pointCloud.frustumCulled = false;
 	return pointCloud;
 }
 
