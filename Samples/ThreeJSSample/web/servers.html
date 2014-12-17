@@ -57,14 +57,24 @@
 		varying float depthColor;
 		varying vec2 vUv;
 		
+
+        float unpack (vec4 colour)
+        {
+            const vec4 bitShifts = vec4(1.0 / (256.0 * 256.0 * 256.0),
+                                        1.0 / (256.0 * 256.0),
+                                        1.0 / 256.0,
+                                        1);
+            return dot(colour , bitShifts);
+        }
+
 		void main() {
 
 			vUv = vec2( position.x / width, ( position.y / height ) );
 			vec4 color = texture2D( depthTexture, vUv );	
-			float depth = ( color.r + color.g + color.b ) / 3.0;	
+			float depth = unpack( color.xyzz ) * 65000.0;	
 
 			// Projection code by @kcmic
-			float z = ( 1.0 - depth ) * (farClipping - nearClipping) + nearClipping;
+			float z = (depth ) * (farClipping - nearClipping) + nearClipping;
 			vec4 pos = vec4(
 				( position.x / width - 0.5 ) * z * XtoZ,
 				( position.y / height - 0.5 ) * z * YtoZ,
@@ -80,7 +90,14 @@
 	</script>
 
 	<script type="x-shader/x-fragment" id="fragmentshader">
-
+        float unpack (vec4 colour)
+        {
+            const vec4 bitShifts = vec4(1.0 / (256.0 * 256.0 * 256.0),
+                                        1.0 / (256.0 * 256.0),
+                                        1.0 / 256.0,
+                                        1);
+            return dot(colour , bitShifts);
+        }
 
 		uniform sampler2D depthTexture;
 
@@ -88,8 +105,24 @@
 
 		void main() {
 
-			vec4 color = texture2D( depthTexture, vUv );
-			gl_FragColor = vec4( color.r, color.g, color.b, smoothstep( 8000.0, -8000.0, gl_FragCoord.z / gl_FragCoord.w ) );
+			vec4 color = vec4( texture2D( depthTexture, vUv ) );
+			if( length( color.xyz ) == 0.0 ){
+				discard;
+			}
+
+			float hex = unpack( color.xyzz );
+
+			if( hex == 8191.0 ){
+				discard;
+			}
+
+			if( hex == 4095.0 ){
+				discard;
+			}
+			
+			// gl_FragColor = vec4( color.r, color.g, color.b, smoothstep( 8000.0, -8000.0, gl_FragCoord.z / gl_FragCoord.w ) );
+
+			gl_FragColor = vec4( 1.0 );
 
 		}
 

@@ -6,7 +6,7 @@ var imgHeight = 424;
 var depthMap;
 var depthTexture;
 
-var nearClipping = 12050, farClipping = 500;
+var nearClipping = 500, farClipping = 12050;
 
 function setup(){
 	var p5Canvas = createCanvas(imgWidth, imgHeight); 
@@ -19,8 +19,10 @@ function setup(){
 function main( depthCanvas ) {
 	var scene = new THREE.Scene();
 	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100000 );
-	camera.position.set( 100, 100, 100 );
-	var renderer = new THREE.WebGLRenderer();
+	camera.position.set( 100, 100, 1000 );
+	var renderer = new THREE.WebGLRenderer({
+		precision: 'highp'
+	});
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	var controls = new THREE.OrbitControls( camera, renderer.domElement );
 
@@ -75,12 +77,12 @@ function createParticles( numParticles, depthCanvas ){
 function updateDepth(imgArray) {
 	img.loadPixels();
 
-	for (var i = 0; i<imgArray.length; i++){
+	for (var i = 0; i<imgWidth * imgHeight; i++){
 		var idx = i * 4;
 		var color = imgArray[ i ];
-		img.pixels[ idx ] = color;
-		img.pixels[ idx + 1 ] = color;
-		img.pixels[ idx + 2 ] = color;
+		img.pixels[ idx ] = imgArray[ i ];
+		img.pixels[ idx + 1 ] = imgArray[ i ];
+		img.pixels[ idx + 2 ] = 0;
 		img.pixels[ idx + 3 ] = 255;
 	}
 
